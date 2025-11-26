@@ -29,27 +29,18 @@ class TrashCanDataset(Dataset):
         img = cv2.imread(img_path)
         h_orig, w_orig = img.shape[:2]
 
-        # Resize
+        # Rescale image
         img = cv2.resize(img, self.img_size)
         img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
-        img = img.astype(np.float32) / 255.0
-        img = torch.from_numpy(img).permute(2, 0, 1)   # [C,H,W]
-
-        # BBox
-        bbox = np.array(ann["bbox"], dtype=np.float32)
+        # Rescale bbox to match resized image
+        bbox = np.array(ann["bbox"], dtype=np.float32)  # [x, y, w, h]
         scale_x = self.img_size[0] / w_orig
         scale_y = self.img_size[1] / h_orig
-        bbox[0] *= scale_x
-        bbox[1] *= scale_y
-        bbox[2] *= scale_x
-        bbox[3] *= scale_y
-        bbox = torch.tensor(bbox, dtype=torch.float32)
+        bbox[0] *= scale_x  # x
+        bbox[1] *= scale_y  # y
+        bbox[2] *= scale_x  # w
+        bbox[3] *= scale_y  # h
 
-        # Label
-        label = torch.tensor(ann["category_id"]-1, dtype=torch.long)
+        label = ann["category_id"]
 
-        target = {
-            "boxes": bbox,
-            "labels": label
-        }
-        return img, target
+        return img, bbox, label
